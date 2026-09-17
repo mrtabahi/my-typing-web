@@ -4,13 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | Decoding HCM</title>
+    <script>
+  // पेज का कोई भी HTML लोड होने से पहले ही लॉगिन चेक
+  (async function() {
+    // Supabase का सेशन चेक करने का आसान तरीका
+    const supabaseUrl = 'YOUR_SUPABASE_URL'; // अपनी Supabase URL यहाँ डालें
+    const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; // अपनी Anon Key यहाँ डालें
+    
+    // अगर आप supabaseClient पहले से लोड कर रहे हैं, तो सीधे redirect वाला लॉजिक अपनाएं
+  })();
+</script>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/admin.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style> 
+   <!-- <style> 
         /* Sab kuchh chipa rahe */
         #admin-content {display: none;}
     </style>
+-->
 </head>
 <body>
     <nav class="navbar">
