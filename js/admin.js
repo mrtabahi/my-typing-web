@@ -1,34 +1,76 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    await AuthManager.requireAdminGuard();
+    // 1. Admin Verification Guard
+    // अगर यूज़र एडमिन नहीं है, तो उसे तुरंत लॉगिन पेज पर भेज देगा और आगे का कोड रन नहीं होगा
+    const profile = await AuthManager.getProfile();
+    if (!profile || profile.role !== 'admin') {
+        alert("केवल Admin ही इस पेज को एक्सेस कर सकते हैं!");
+        window.location.href = "login.html";
+        return; // सुरक्षा के लिए कोड यहीं रोक दें
+    }
 
-    // Fetch Stats
-    const { count: attemptCount } = await supabaseClient.from("attempts").select("*", { count: 'exact', head: true });
-    const { count: testCount } = await supabaseClient.from("tests").select("*", { count: 'exact', head: true });
+    // 2. Fetch Stats safely
+    try {
+        const { count: attemptCount } = await supabaseClient
+            .from("attempts")
+            .select("*", { count: 'exact', head: true });
+            
+        const { count: testCount } = await supabaseClient
+            .from("tests")
+            .select("*", { count: 'exact', head: true });
 
-    document.getElementById("adm-total-attempts").textContent = attemptCount || 0;
-    document.getElementById("adm-total-passages").textContent = testCount || 0;
+        const attemptsEl = document.getElementById("adm-total-attempts");
+        const passagesEl = document.getElementById("adm-total-passages");
 
-    // Add Passage Form
-    document.getElementById("add-passage-form").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const title = document.getElementById("pass-title").value;
-        const lang = document.getElementById("pass-lang").value;
-        const text = document.getElementById("pass-text").value;
+        if (attemptsEl) attemptsEl.textContent = attemptCount || 0;
+        if (passagesEl) passagesEl.textContent = testCount || 0;
+    } catch (err) {
+        console.error("Stats लोड करने में एरर आया:", err);
+    }
 
-        const { error } = await supabaseClient.from("tests").insert([{
-            title: title,
-            language: lang,
-            passage: text,
-            mode: 'screen',
-            duration_minutes: 10,
-            active: true
-        }]);
+    // 3. Add Passage Form Handler
+    const addPassageForm = document.getElementById("add-passage-form");
+    if (addPassageForm) {
+        addPassageForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
 
-        if (!error) {
-            alert("Passage Published Successfully!");
-            window.location.reload();
-        } else {
-            alert("Error publishing passage: " + error.message);
-        }
-    });
+            const titleInput = document.getElementById("pass-title");
+            const langInput = document.getElementById("pass-lang");
+            const textInput = document.getElementById("pass-text");
+
+            if (!titleInput  !langInput  !textInput) {
+                alert("फॉर्म के इनपुट फ़ील्ड्स नहीं मिले!");
+                return;
+            }
+
+            const title = titleInput.value.trim();
+            const lang = langInput.value;
+            const text = textInput.value.trim();
+
+            if (!title || !text) {
+                alert("कृपया Title और Passage पूरा भरें!");
+                return;
+            }
+
+            // Submit Button को Disable करना ताकि बार-बार क्लिक न हो
+            const submitBtn = addPassageForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            const { error } = await supabaseClient.from("tests").insert([{
+                title: title,
+                language: lang,
+                passage: text,
+                mode: 'screen',
+                duration_minutes: 10,
+                active: true
+            }]);
+
+            if (!error) {
+                alert("Passage सफलतापूर्वक पब्लिश हो गया!");
+                window.location.reload();
+            } else {
+                alert("Error publishing passage: " + error.message);
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
+    }
 });
