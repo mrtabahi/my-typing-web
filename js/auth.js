@@ -37,14 +37,57 @@ const AuthManager = {
 
     logout: async function () {
         await supabaseClient.auth.signOut();
-        window.location.href = '/login.html';
+        window.location.href = 'login.html';
     },
 
     requireAdminGuard: async function () {
         const profile = await this.getProfile();
         if (!profile || profile.role !== 'admin') {
-            alert("Unauthorized Access. Admin credentials required.");
-            window.location.href = '/login.html';
+            window.location.href = 'login.html';
         }
     }
 };
+
+// LOGIN FORM SUBMISSION HANDLER
+document.addEventListener("DOMContentLoaded", () => {
+    const loginForm = document.getElementById("login-form");
+    
+    if (loginForm) {
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const emailInput = document.getElementById("login-email");
+            const passwordInput = document.getElementById("login-password");
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
+
+            const email = emailInput ? emailInput.value.trim() : "";
+            const password = passwordInput ? passwordInput.value : "";
+
+            if (!email || !password) {
+                alert("कृपया ईमेल और पासवर्ड दोनों दर्ज करें!");
+                return;
+            }
+
+            try {
+                if (submitBtn) submitBtn.disabled = true;
+
+                // 1. Supabase में लॉगिन करें
+                await AuthManager.login(email, password);
+
+                // 2. लॉगिन होने के बाद यूजर का Profile/Role चेक करें
+                const profile = await AuthManager.getProfile();
+
+                // 3. Role के आधार पर सही पेज पर भेजें (बिना किसी टोस्ट/अलर्ट के)
+                if (profile && profile.role === 'admin') {
+                    window.location.href = 'admin.html'; // Admin सीधा एडमिन पैनल पर जाएगा
+                } else {
+                    window.location.href = 'index.html'; // Candidate होमपेज पर जाएगा
+                }
+
+            } catch (error) {
+                alert("लॉगिन असफल: " + (error.message || "ईमेल या पासवर्ड गलत है!"));
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
+    }
+});
