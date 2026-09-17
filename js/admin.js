@@ -1,36 +1,36 @@
-document.addEventListener("DOMContentLoaded", async () => {
+// पेज लोड होते ही तुरंत रन होगा
+(async () => {
     // 1. Supabase Session Check
     const { data: { session } } = await supabaseClient.auth.getSession();
 
-    // अगर यूज़र लॉग-इन नहीं है, तो बिना मैसेज के लॉगिन पेज पर भेजें
+    // अगर यूजर लॉग-इन नहीं है, तो तुरंत Login Page पर भेजें
     if (!session) {
-        window.location.href = "login.html";
+        window.location.replace("login.html");
         return;
     }
 
-    // 2. Role Check
+    // 2. Profile Role Check
     const { data: profile, error } = await supabaseClient
         .from('profiles')
         .select('role')
         .eq('id', session.user.id)
         .single();
 
-    // अगर Admin नहीं है तो लॉगिन पर भेजें
+    // अगर यूजर Admin नहीं है, तो भी Login Page पर भेजें
     if (error  !profile  profile.role !== 'admin') {
-        window.location.href = "login.html";
+        window.location.replace("login.html");
         return;
     }
 
-    // 3. Admin वेरिफिकेशन सही होने पर कंटेंट दिखाएं
+    // 3. अगर Admin Verification 100% सही है, तभी एडमिन कंटेंट दिखाएं
     const adminContent = document.getElementById("admin-content");
     if (adminContent) {
         adminContent.style.display = "block";
     } else {
-        // अगर ID नहीं मिली तो पूरे बॉडी को दिखा दें
         document.body.style.display = "block";
     }
 
-    // 4. Fetch Stats safely
+    // 4. Stats Load करें
     try {
         const { count: attemptCount } = await supabaseClient
             .from("attempts")
@@ -59,11 +59,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             const langInput = document.getElementById("pass-lang");
             const textInput = document.getElementById("pass-text");
 
-            if (!titleInput  !langInput  !textInput) {
-                alert("फॉर्म के इनपुट फ़ील्ड्स नहीं मिले!");
-                return;
-            }
-
             const title = titleInput.value.trim();
             const lang = langInput.value;
             const text = textInput.value.trim();
@@ -89,9 +84,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                 alert("Passage सफलतापूर्वक पब्लिश हो गया!");
                 window.location.reload();
             } else {
-                alert("Error publishing passage: " + insertError.message);
+                alert("Error: " + insertError.message);
                 if (submitBtn) submitBtn.disabled = false;
             }
         });
     }
-});
+})();
