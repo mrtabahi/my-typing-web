@@ -1,28 +1,34 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Supabase Session Check (Direct)
+    // 1. Supabase Session Check
     const { data: { session } } = await supabaseClient.auth.getSession();
 
-    // अगर यूज़र लॉग-इन नहीं है, तो बिना कोई मैसेज दिखाए सीधे लॉगिन पेज पर भेजें
+    // अगर यूज़र लॉग-इन नहीं है, तो बिना मैसेज के लॉगिन पेज पर भेजें
     if (!session) {
         window.location.href = "login.html";
         return;
     }
 
-    // 2. Profile Check
+    // 2. Role Check
     const { data: profile, error } = await supabaseClient
         .from('profiles')
         .select('role')
         .eq('id', session.user.id)
         .single();
 
-    // अगर यूज़र Admin नहीं है, तो बिना मैसेज के सीधे लॉगिन पेज पर भेजें
+    // अगर Admin नहीं है तो लॉगिन पर भेजें
     if (error  !profile  profile.role !== 'admin') {
         window.location.href = "login.html";
         return;
     }
 
-    // 3. Admin वेरिफिकेशन सही होने पर पेज दिखाएं
-    document.body.style.display = "block";
+    // 3. Admin वेरिफिकेशन सही होने पर कंटेंट दिखाएं
+    const adminContent = document.getElementById("admin-content");
+    if (adminContent) {
+        adminContent.style.display = "block";
+    } else {
+        // अगर ID नहीं मिली तो पूरे बॉडी को दिखा दें
+        document.body.style.display = "block";
+    }
 
     // 4. Fetch Stats safely
     try {
