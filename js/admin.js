@@ -1,14 +1,30 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Admin Verification Guard
-    // अगर यूज़र एडमिन नहीं है, तो उसे तुरंत लॉगिन पेज पर भेज देगा और आगे का कोड रन नहीं होगा
-    const profile = await AuthManager.getProfile();
-    if (!profile || profile.role !== 'admin') {
-        alert("केवल Admin ही इस पेज को एक्सेस कर सकते हैं!");
+    // 1. Supabase Session Check (Direct)
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    // अगर यूज़र लॉग-इन नहीं है, तो बिना कोई मैसेज दिखाए सीधे लॉगिन पेज पर भेजें
+    if (!session) {
         window.location.href = "login.html";
-        return; // सुरक्षा के लिए कोड यहीं रोक दें
+        return;
     }
 
-    // 2. Fetch Stats safely
+    // 2. Profile Check
+    const { data: profile, error } = await supabaseClient
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+    // अगर यूज़र Admin नहीं है, तो बिना मैसेज के सीधे लॉगिन पेज पर भेजें
+    if (error  !profile  profile.role !== 'admin') {
+        window.location.href = "login.html";
+        return;
+    }
+
+    // 3. Admin वेरिफिकेशन सही होने पर पेज दिखाएं
+    document.body.style.display = "block";
+
+    // 4. Fetch Stats safely
     try {
         const { count: attemptCount } = await supabaseClient
             .from("attempts")
@@ -24,10 +40,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (attemptsEl) attemptsEl.textContent = attemptCount || 0;
         if (passagesEl) passagesEl.textContent = testCount || 0;
     } catch (err) {
-        console.error("Stats लोड करने में एरर आया:", err);
+        console.error("Stats error:", err);
     }
 
-    // 3. Add Passage Form Handler
+    // 5. Add Passage Form Handler
     const addPassageForm = document.getElementById("add-passage-form");
     if (addPassageForm) {
         addPassageForm.addEventListener("submit", async (e) => {
@@ -51,11 +67,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 return;
             }
 
-            // Submit Button को Disable करना ताकि बार-बार क्लिक न हो
             const submitBtn = addPassageForm.querySelector('button[type="submit"]');
             if (submitBtn) submitBtn.disabled = true;
 
-            const { error } = await supabaseClient.from("tests").insert([{
+            const { error: insertError } = await supabaseClient.from("tests").insert([{
                 title: title,
                 language: lang,
                 passage: text,
@@ -64,11 +79,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                 active: true
             }]);
 
-            if (!error) {
+            if (!insertError) {
                 alert("Passage सफलतापूर्वक पब्लिश हो गया!");
                 window.location.reload();
             } else {
-                alert("Error publishing passage: " + error.message);
+                alert("Error publishing passage: " + insertError.message);
                 if (submitBtn) submitBtn.disabled = false;
             }
         });
