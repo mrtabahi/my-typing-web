@@ -1,6 +1,6 @@
 // DECODING HCM - SUPABASE ENVIRONMENT INITIALIZATION
-const SUPABASE_URL = "https://nztcsmrearhcrzgxzfnu.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_QCs9lcBTkSda9BNaNV3TCQ_WAGcesgC";
+const SUPABASE_URL = "https://nuqfmjgkyfychhwzwnfl.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_qs5b_5S5CphfZSYxqSiV8A_18XR4Gra";
 
 // Initialize Supabase Client globally loaded via CDN in HTML
 let supabaseClient = null;
